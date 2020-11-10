@@ -5,18 +5,12 @@ const units = require('eth-helpers/units')
 const { Wei, Ether } = units
 const { EventEmitter } = require('events')
 
-module.exports = function configure (index, opts) {
-  if (!opts) opts = {}
-
-  // const feed = opts.index ? null : opts.feed || hypercore('./db')
-  // const url = 'https://ropsten.infura.io/v3/2aa3f1f44c224eff83b07cef6a5b48b5'
-
-  // const index = opts.index || new Indexer(url, feed, opts.since)
-  const { createTransactionStream } = index
+module.exports = function configure (index, client) {
+  console.log(client)
+  if (!client) client = index
 
   return {
     subscription,
-    createTransactionStream
   }
 
   // include 2000ms payment delay to account for block latency
@@ -33,13 +27,11 @@ module.exports = function configure (index, opts) {
       if (!match) throw new Error('rate should have the form "n....nn ETH/s"')
       perSecond = BigInt(match[1])
     }
-    console.log(perSecond)
 
     const sub = new EventEmitter()
     let payments = clerk(perSecond, minSeconds, paymentDelay)
 
-    index.add(buyer).then(() => {
-      console.log('lets go')
+    client.add(buyer).then((a) => {
       const stream = index.createTransactionStream(buyer)
 
       sub.synced = false
@@ -49,7 +41,7 @@ module.exports = function configure (index, opts) {
       })
 
       stream.on('data', function (data) {
-        const amount = BigInt(data.tx.value) // todo: use Eth utils
+        const amount = BigInt(data.value)
         const time = BigInt(data.timestamp) // ETH timestamps are in seconds
 
         payments.add({ amount, time })

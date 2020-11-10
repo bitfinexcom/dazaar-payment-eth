@@ -1,11 +1,11 @@
 const Indexer = require('../../eth/eth-transaction-indexer')
 const Hyperbee = require('hyperbee')
 const hypercore = require('hypercore')
+const replicate = require('@hyperswarm/replicator')
 const clerk = require('payment-tracker')
 const payments = require('./subscription')
 const DazaarETHTweak = require('@dazaar/eth-tweak')
 
-const TESTNET = 'https://ropsten.infura.io/v3/2aa3f1f44c224eff83b07cef6a5b48b5'
 const MAX_SUBSCRIBER_CACHE = 500
 const since = 9042261 - 200
 
@@ -13,13 +13,14 @@ module.exports = class DazaarETHPayment {
   constructor (dazaar, feedKey, ethPubkey, payment, opts = {}) {
     this.dazaar = dazaar.key
     this.payment = payment
-    this.feed = hypercore('./db')
+    this.feed = hypercore('./db', feedKey)
 
-    this.index = opts.index || new Indexer(TESTNET, this.feed, since)
-    this.index.start()
+    this.index = new Indexer(this.feed, since)
+    this.client = opts.client
+    replicate(this.feed)
 
     this.subscribers = new Map()
-    this.eth = payments(this.index)
+    this.eth = payments(this.index, this.client)
 
     this.tweak = new DazaarETHTweak({
       publicKey: ethPubkey,
@@ -45,7 +46,6 @@ module.exports = class DazaarETHPayment {
     }
 
     function onupdate () {
-      console.log('helllloooooooo tx baby')
       if (tail.active()) onsynced()
     }
 
