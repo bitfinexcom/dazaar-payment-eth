@@ -1,20 +1,16 @@
-const Indexer = require('../../eth/eth-transaction-indexer')
 const clerk = require('payment-tracker/bigint')
-const hypercore = require('hypercore')
 const units = require('eth-helpers/units')
-const { Wei, Ether } = units
 const { EventEmitter } = require('events')
 
 module.exports = function configure (index, client) {
   if (!client) client = index
 
   return {
-    subscription,
+    subscription
   }
 
   // include 2000ms payment delay to account for block latency
   function subscription (buyer, paymentInfo, minSeconds, paymentDelay) {
-    const self = this
     let perSecond = 0
 
     if (typeof paymentInfo === 'object' && paymentInfo) { // dazaar card
@@ -28,10 +24,11 @@ module.exports = function configure (index, client) {
     }
 
     const sub = new EventEmitter()
+    let stream = null
     let payments = clerk(perSecond, minSeconds, paymentDelay)
 
     client.add(buyer).then((a) => {
-      const stream = index.createTransactionStream(buyer)
+      stream = index.createTransactionStream(buyer)
 
       sub.synced = false
       stream.once('synced', function () {
@@ -63,7 +60,7 @@ module.exports = function configure (index, client) {
 
     sub.destroy = function () {
       payments = null
-      stream.destroy()
+      if (stream) stream.destroy()
     }
 
     return sub
@@ -89,12 +86,6 @@ function convertDazaarPayment (pay) {
   if (!perSecond) throw new Error('Invalid payment info')
 
   return units.convert(perSecond, units[pay.currency])
-}
-
-function parseQuantity (s) {
-  const m = s.match(/^(\d+(?:\.\d+)?) EOS$/)
-  if (!m) return 0
-  return Number(m[1])
 }
 
 function blockKey (seq) {
