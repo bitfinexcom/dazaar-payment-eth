@@ -1,5 +1,4 @@
 const Indexer = require('../../eth/eth-transaction-indexer')
-const Hyperbee = require('hyperbee')
 const hypercore = require('hypercore')
 const replicate = require('@hyperswarm/replicator')
 const payments = require('./subscription')
@@ -64,7 +63,6 @@ module.exports = class DazaarETHPayment {
   }
 
   _filter (buyer) {
-    console.log('pay to: ' + this.tweak.address(this.dazaar, buyer))
     return this.tweak.address(this.dazaar, buyer)
   }
 
@@ -86,8 +84,13 @@ module.exports = class DazaarETHPayment {
       if (self.subscribers.get(h) === tail) self.subscribers.delete(h)
     }
   }
-}
 
-function metadata (seller, buyer) {
-  return 'dazaar: ' + seller.toString('hex') + ' ' + buyer.toString('hex')
+  static tweak (buyer, dazaarCard) {
+    const t = new DazaarETHTweak({
+      publicKey: dazaarCard.payment.ethPubKey,
+      chainId: dazaarCard.payment.chainId
+    })
+
+    return t.address(dazaarCard.id, buyer)
+  }
 }
