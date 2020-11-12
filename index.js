@@ -5,6 +5,13 @@ const payments = require('./subscription')
 const DazaarETHTweak = require('@dazaar/eth-tweak')
 
 const MAX_SUBSCRIBER_CACHE = 500
+const CHAIN_IDS = {
+  mainnet: 1,
+  ropsten: 3,
+  rinkeby: 4,
+  kovan: 42,
+  classic: 61
+}
 
 module.exports = class DazaarETHPayment {
   constructor (dazaar, feedKey, ethPubkey, payment, opts = {}) {
@@ -21,7 +28,7 @@ module.exports = class DazaarETHPayment {
 
     this.tweak = new DazaarETHTweak({
       publicKey: ethPubkey,
-      chainId: opts.chainId
+      chainId: CHAIN_IDS[payment.chain || 'mainnet']
     })
   }
 
@@ -86,9 +93,10 @@ module.exports = class DazaarETHPayment {
   }
 
   static tweak (buyer, dazaarCard) {
+    const p = dazaarCard.payment
     const t = new DazaarETHTweak({
-      publicKey: dazaarCard.payment.ethPubKey,
-      chainId: dazaarCard.payment.chainId
+      publicKey: p.ethPubKey,
+      chainId: CHAIN_IDS[p.chain || 'mainnet']
     })
 
     return t.address(dazaarCard.id, buyer)
