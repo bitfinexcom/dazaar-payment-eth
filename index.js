@@ -16,7 +16,6 @@ module.exports = class DazaarETHPayment {
     this.index = new Indexer(this.feed)
     this.client = opts.client
     replicate(this.feed, { lookup: true, announce: false, live: true, download: true })
-    this.feed.on('append', () => console.log('new tx'))
 
     this.subscribers = new Map()
     this.eth = payments(this.index, this.client)
