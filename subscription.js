@@ -6,7 +6,6 @@ const { Wei, Ether } = units
 const { EventEmitter } = require('events')
 
 module.exports = function configure (index, client) {
-  console.log(client)
   if (!client) client = index
 
   return {
@@ -40,11 +39,20 @@ module.exports = function configure (index, client) {
         sub.emit('synced')
       })
 
-      stream.on('data', function (data) {
-        const amount = BigInt(data.value)
-        const time = BigInt(data.timestamp) // ETH timestamps are in seconds
+      stream.on('data', async function (data) {
+        if (data.timestamp) {
+          const amount = BigInt(data.value)
+          const time = BigInt(data.timestamp * 1000) // ETH timestamps are in seconds
+          payments.add({ amount, time })
+        } else {
+          const tx = data.value
+          const block = await index.db.get(blockKey(tx.blockNumber))
 
-        payments.add({ amount, time })
+          const amount = BigInt(tx.value)
+          const time = BigInt(block.value.timestamp * 1000) // ETH timestamps are in seconds
+          payments.add({ amount, time })
+        }
+
         sub.emit('update')
       })
     })
@@ -79,7 +87,6 @@ function convertDazaarPayment (pay) {
 
   const perSecond = BigInt(pay.amount) / (BigInt(pay.interval) * ratio)
   if (!perSecond) throw new Error('Invalid payment info')
-  console.log(perSecond)
 
   return units.convert(perSecond, units[pay.currency])
 }
@@ -88,4 +95,12 @@ function parseQuantity (s) {
   const m = s.match(/^(\d+(?:\.\d+)?) EOS$/)
   if (!m) return 0
   return Number(m[1])
+}
+
+function blockKey (seq) {
+  return '!block!' + padBlockNumber(seq)
+}
+
+function padBlockNumber (n) {
+  return n.slice(2).padStart(12, '0')
 }

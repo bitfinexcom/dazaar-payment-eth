@@ -2,12 +2,10 @@ const Indexer = require('../../eth/eth-transaction-indexer')
 const Hyperbee = require('hyperbee')
 const hypercore = require('hypercore')
 const replicate = require('@hyperswarm/replicator')
-const clerk = require('payment-tracker')
 const payments = require('./subscription')
 const DazaarETHTweak = require('@dazaar/eth-tweak')
 
 const MAX_SUBSCRIBER_CACHE = 500
-const since = 9042261 - 200
 
 module.exports = class DazaarETHPayment {
   constructor (dazaar, feedKey, ethPubkey, payment, opts = {}) {
@@ -15,9 +13,10 @@ module.exports = class DazaarETHPayment {
     this.payment = payment
     this.feed = hypercore('./db', feedKey)
 
-    this.index = new Indexer(this.feed, since)
+    this.index = new Indexer(this.feed)
     this.client = opts.client
-    replicate(this.feed)
+    replicate(this.feed, { lookup: true, announce: false, live: true, download: true })
+    this.feed.on('append', () => console.log('new tx'))
 
     this.subscribers = new Map()
     this.eth = payments(this.index, this.client)
