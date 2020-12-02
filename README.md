@@ -57,7 +57,7 @@ Create a new eth payment instance associated to a seller. `seller` should be a d
 ```js
 {
   feedKey: ..., // feed key for a remote ethereum index
-  client: ..., // client for the remote index service
+  client: ..., // client for the remote index service (see https://github.com/hyperdivision/eth-indexer-service)
   index: ..., // alternatively, a live indexer instance may also be passed in
   endpoint: ..., // specify an chain endpoint and an new index shall be made 
 }
