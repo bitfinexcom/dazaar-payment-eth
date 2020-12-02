@@ -1,4 +1,4 @@
-const Indexer = require('../../eth/eth-transaction-indexer')
+const Indexer = require('@hyperdivsion/eth-transaction-indexer')
 const hypercore = require('hypercore')
 const replicate = require('@hyperswarm/replicator')
 const payments = require('./subscription')
