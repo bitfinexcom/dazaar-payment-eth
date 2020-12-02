@@ -14,20 +14,27 @@ const CHAIN_IDS = {
 }
 
 module.exports = class DazaarETHPayment {
-  constructor (dazaar, feedKey, ethPubkey, payment, opts = {}) {
+  constructor (dazaar, payment, opts = {}) {
     this.dazaar = dazaar.key
     this.payment = payment
-    this.feed = hypercore('./db', feedKey)
 
-    this.index = new Indexer(this.feed)
-    this.client = opts.client
+    this._storage = opts.storage || './db'
+    this.feed = opts.index ? opts.index.feed : hypercore(this._storage, opts.feedKey)
+
+    this.index = opts.index || new Indexer(this.feed, opts)
+    this.client = this.index.live ? null : opts.client
+
+    if (opts.client === undefined) {
+      throw new Error('Indexer must have access to the network.')
+    }
+
     replicate(this.feed, { lookup: true, announce: false, live: true, download: true })
 
     this.subscribers = new Map()
     this.eth = payments(this.index, this.client)
 
     this.tweak = new DazaarETHTweak({
-      publicKey: ethPubkey,
+      publicKey: payment.ethPubKey,
       chainId: CHAIN_IDS[payment.chain || 'mainnet']
     })
   }
@@ -92,7 +99,7 @@ module.exports = class DazaarETHPayment {
     }
   }
 
-  static tweak (buyer, dazaarCard) {
+  static tweak (buyerKey, dazaarCard) {
     const p = dazaarCard.payment
     const t = new DazaarETHTweak({
       publicKey: p.ethPubKey,
