@@ -16,12 +16,14 @@ const opts = {
 }
 
 const paymentCard = {
-  ethPubKey: '0x50c7d91e74b0e42bd8bce8ad6d199e4a23c0b193',
-  id: 'dazaartest22'
-  currency: 'microether',
-  amount: '1',
-  unit: 'seconds',
-  interval: 1
+  id: 'dazaartest22',
+  payment: [{
+    ethPubKey: '0x50c7d91e74b0e42bd8bce8ad6d199e4a23c0b193',
+    currency: 'microether',
+    amount: '1',
+    unit: 'seconds',
+    interval: 1
+  }]
 }
 
 let payment
@@ -46,7 +48,7 @@ seller.ready(function (err) {
 const buyer = m.buy(seller.key)
 
 // generate the ethereum adress to pay to for a given stream
-const payTo = PaymentETH.tweak(buyer.key, opts)
+const payTo = PaymentETH.tweak(buyer.key, dazaarCard, 'microether')
 
 // pay the desired amount to the address generated
 ```
@@ -66,7 +68,7 @@ Create a new eth payment instance associated to a seller. `seller` should be a d
 #### `payment.validate(buyerKey, cb)`
 A seller can validate the time left for a given buyer. Returns `error` if there is no time left on the subscription. The method shall check whether the given buyer has a subscription set-up and instantiate one not already present.
 
-#### `const payTo = PaymentETH.tweak(buyerKey, dazaarCard)`
+#### `const payTo = PaymentETH.tweak(buyerKey, dazaarCard, [paymentType])`
 Static method to generate the ETH address to pay to for a given stream. `buyerKey` is the buyer's dazaar key and `dazaarCard` give the relevant stream details.
 
 ## License
