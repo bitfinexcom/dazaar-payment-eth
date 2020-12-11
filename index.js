@@ -99,7 +99,7 @@ module.exports = class DazaarETHPayment {
     }
   }
 
-  static tweak (buyerKey, dazaarCard, payment) {
+  static tweak (buyerKey, dazaarCard, payment = 0) {
     if (typeof payment === 'number') payment = dazaarCard.payment[payment]
     if (typeof payment === 'string') payment = dazaarCard.payment.find(p => p.currency === payment)
 
