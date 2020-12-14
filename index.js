@@ -34,7 +34,7 @@ module.exports = class DazaarETHPayment {
     this.eth = payments(this.index, this.client)
 
     this.tweak = new DazaarETHTweak({
-      publicKey: payment.ethPubKey,
+      publicKey: payment.pubKey,
       chainId: CHAIN_IDS[payment.chain || 'mainnet']
     })
   }
@@ -101,13 +101,13 @@ module.exports = class DazaarETHPayment {
 
   static tweak (buyerKey, dazaarCard, payment = 0) {
     if (typeof payment === 'number') payment = dazaarCard.payment[payment]
-    if (typeof payment === 'string') payment = dazaarCard.payment.find(p => p.currency === payment)
+    if (typeof payment === 'string') payment = dazaarCard.payment.find(p => p.method.toLowerCase() === payment.toLowerCase())
 
     if (!payment) throw new Error('Unknown payment')
-    if (!payment.ethPubKey) throw new Error('Payment does not support ETH')
+    if (!payment.pubKey) throw new Error('Payment does not support ETH')
  
     const t = new DazaarETHTweak({
-      publicKey: payment.ethPubKey,
+      publicKey: payment.pubKey,
       chainId: CHAIN_IDS[payment.chain || 'mainnet']
     })
 
