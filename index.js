@@ -100,7 +100,7 @@ module.exports = class DazaarETHPayment {
   }
 
   static supports (payment) {
-    return payment.method.toUpperCase() === 'ETH'
+    return !!payment.method && payment.method.toUpperCase() === 'ETH'
   }
 
   static tweak (buyerKey, dazaarCard, payment = 0) {
