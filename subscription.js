@@ -40,7 +40,7 @@ module.exports = function configure (index) {
 
       stream.on('data', function (data) {
         const amount = BigInt(data.value)
-        const time = BigInt(data.timestamp) * 1000n // ETH timestamps are in seconds
+        const time = Number(data.timestamp) * 1000 // ETH timestamps are in seconds
         payments.add({ amount, time })
         sub.emit('update')
       })
@@ -49,7 +49,7 @@ module.exports = function configure (index) {
     })
 
     sub.active = payments.active
-    sub.remainingTime = () => Number(payments.remainingTime())
+    sub.remainingTime = payments.remainingTime
     sub.remainingFunds = payments.remainingFunds
 
     sub.destroy = function () {
