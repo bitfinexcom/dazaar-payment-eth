@@ -12,6 +12,7 @@ const CHAIN_IDS = {
 
 module.exports = class DazaarETHPayment {
   constructor (dazaar, payment, index) {
+    if (!dazaar.key) throw new Error('Dazaar key not set, did you wait for ready?')
     this.dazaar = dazaar.key
     this.payment = payment
     this.index = index
