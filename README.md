@@ -1,10 +1,10 @@
-# dazaar-payment-eth
+# @dazaar/payment-eth
 Ethereum payment api for Dazaar stream services
 
 ## Usage
 
 ```js
-const PaymentETH = require('dazaar-payment-eth')
+const PaymentETH = require('@dazaar/payment-eth')
 const market = require('dazaar/market')
 const Index = require('@hyperdivision/eth-transaction-indexer')
 const hypercore = require('hypercore')
@@ -20,7 +20,7 @@ const paymentCard = {
   id: 'dazaartest22',
   payment: [{
     method: 'ETH',
-    payToPubKey: '0x50c7d91e74b0e42bd8bce8ad6d199e4a23c0b193',
+    pubKey: '0x50c7d91e74b0e42bd8bce8ad6d199e4a23c0b193',
     currency: 'microether',
     amount: 1,
     unit: 'seconds',
