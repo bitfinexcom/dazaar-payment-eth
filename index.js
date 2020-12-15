@@ -1,8 +1,7 @@
-const Indexer = require('@hyperdivsion/eth-transaction-indexer')
+const Indexer = require('@hyperdivision/eth-transaction-indexer')
 const hypercore = require('hypercore')
-const replicate = require('@hyperswarm/replicator')
-const payments = require('./subscription')
 const DazaarETHTweak = require('@dazaar/eth-tweak')
+const payments = require('./subscription')
 
 const MAX_SUBSCRIBER_CACHE = 500
 const CHAIN_IDS = {
@@ -14,27 +13,19 @@ const CHAIN_IDS = {
 }
 
 module.exports = class DazaarETHPayment {
-  constructor (dazaar, payment, opts = {}) {
+  constructor (dazaar, payment, index) {
     this.dazaar = dazaar.key
     this.payment = payment
-
-    this._storage = opts.storage || './db'
-    this.feed = opts.index ? opts.index.feed : hypercore(this._storage, opts.feedKey)
-
-    this.index = opts.index || new Indexer(this.feed, opts)
-    this.client = this.index.live ? null : opts.client
-
-    if (opts.client === undefined) {
-      throw new Error('Indexer must have access to the network.')
-    }
-
-    replicate(this.feed, { lookup: true, announce: false, live: true, download: true })
+    this.index = index
+    this.publicKey = Buffer.from(pubKey(payment), 'hex')
 
     this.subscribers = new Map()
-    this.eth = payments(this.index, this.client)
+    this.eth = payments(this.index)
+
+    index.start()
 
     this.tweak = new DazaarETHTweak({
-      publicKey: payment.pubKey,
+      publicKey: this.publicKey,
       chainId: CHAIN_IDS[payment.chain || 'mainnet']
     })
   }
@@ -77,7 +68,7 @@ module.exports = class DazaarETHPayment {
   }
 
   _filter (buyer) {
-    return this.tweak.address(this.dazaar, buyer)
+    return this.tweak.address(this.dazaar, buyer).toLowerCase()
   }
 
   _get (buyer) {
@@ -104,17 +95,23 @@ module.exports = class DazaarETHPayment {
   }
 
   static tweak (buyerKey, dazaarCard, payment = 0) {
-    if (typeof payment === 'number') payment = dazaarCard.payment[payment]
-    if (typeof payment === 'string') payment = dazaarCard.payment.find(p => p.method.toLowerCase() === payment.toLowerCase())
+    const payments = [].concat(dazaarCard.payment || [])
+
+    if (typeof payment === 'number') payment = payments.filter(p => this.supports(p))[payment]
+    if (typeof payment === 'string') payment = payments.find(p => this.supports(p) && p.currency && p.currency.toLowerCase() === payment.toLowerCase())
 
     if (!payment) throw new Error('Unknown payment')
-    if (!payment.pubKey) throw new Error('Payment does not support ETH')
- 
+    if (!pubKey(payment)) throw new Error('Payment does not support ETH')
+
     const t = new DazaarETHTweak({
-      publicKey: payment.pubKey,
+      publicKey: Buffer.from(pubKey(payment), 'hex'),
       chainId: CHAIN_IDS[payment.chain || 'mainnet']
     })
 
-    return t.address(dazaarCard.id, buyer)
+    return t.address(dazaarCard.id, buyerKey).toLowerCase()
   }
+}
+
+function pubKey (payment) {
+  return payment.payToPubKey || payment.payToPublicKey || payment.pubKey
 }

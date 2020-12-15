@@ -1,31 +1,42 @@
-const payment = require('./')
-const Client = require('../../eth/eth-indexer-service/client')
+const Payment = require('./')
+const Index = require('@hyperdivision/eth-transaction-indexer')
+const hypercore = require('hypercore')
 
-const to = '0x50c7d91e74b0e42bd8bce8ad6d199e4a23c0b193'
-
-const dazaar = {
-  key: Buffer.alloc(32, 1)
-}
+const pubKey = Buffer.from('0380429c32de58087251993924d44727ef4ffe1f427ceca917f91bdcc015abc6aa', 'hex')
 
 const paymentCard = {
-  payto: 'dazaartest22',
-  currency: 'microether',
-  amount: '1',
+  method: 'ETH',
+  currency: 'WEENUS',
+  payToPubKey: pubKey.toString('hex'),
+  erc20Contract: '0x101848d5c5bbca18e6b4431eedf6b95e9adf82fa',
+  erc20ContractDecimals: '18',
+  chain: 'ropsten',
+  amount: 0.01,
   unit: 'seconds',
   interval: 1
 }
 
-const opts = {
-  client: new Client('http://localhost:8080')
+const dazaar = {
+  key: Buffer.alloc(32, 4)
 }
 
-const pubkey = Buffer.from('04211d1ba75165897653e5b74de523d7f42b46e4ce730d371497b01ef5af4466f9f8439cc7f061ffa26a79a3578f0db884b649f12cf255f27e400bc27b5d3625ea', 'hex')
-const feedKey = process.argv[2]
-const test = new payment(dazaar, feedKey, pubkey, paymentCard, opts)
+const dazaarCard = {
+  id: dazaar.key.toString('hex'),
+  payment: [paymentCard]
+}
+
+
+const url = 'https://ropsten.infura.io/v3/2aa3f1f44c224eff83b07cef6a5b48b5'
+const index = new Index(hypercore('./db'), { endpoint: url, confirmations: 0 })
+const test = new Payment(dazaar, paymentCard, index)
+const to = Buffer.alloc(32, 5)
+
+console.log(to)
+console.log(Payment.tweak(to, dazaarCard, 0))
 
 test.validate(to, (err, info) => {
   console.log(err, info)
-  setTimeout(() => {
+  setInterval(() => {
     test.validate(to, console.log)
-  }, 20000)
+  }, 5000)
 })

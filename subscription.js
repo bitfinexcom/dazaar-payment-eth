@@ -2,9 +2,7 @@ const clerk = require('payment-tracker/bigint')
 const units = require('eth-helpers/units')
 const { EventEmitter } = require('events')
 
-module.exports = function configure (index, client) {
-  if (!client) client = index
-
+module.exports = function configure (index) {
   return {
     subscription
   }
@@ -12,9 +10,11 @@ module.exports = function configure (index, client) {
   // include 2000ms payment delay to account for block latency
   function subscription (buyer, paymentInfo, minSeconds, paymentDelay) {
     let perSecond = 0
+    let token = null
 
     if (typeof paymentInfo === 'object' && paymentInfo) { // dazaar card
-      perSecond = convertDazaarPayment(paymentInfo)
+      token = paymentInfo.erc20Contract
+      perSecond = convertDazaarPayment(paymentInfo, Number(token ? paymentInfo.erc20ContractDecimals : '18') || 0, token)
       minSeconds = paymentInfo.minSeconds
       paymentDelay = paymentInfo.paymentDelay
     } else {
@@ -27,8 +27,10 @@ module.exports = function configure (index, client) {
     let stream = null
     let payments = clerk(perSecond, minSeconds, paymentDelay)
 
-    client.add(buyer).then((a) => {
-      stream = index.createTransactionStream(buyer)
+    index.add(buyer, { token }).then((a) => {
+      if (!payments) return
+
+      stream = index.createTransactionStream(buyer, { live: true })
 
       sub.synced = false
       stream.once('synced', function () {
@@ -36,26 +38,18 @@ module.exports = function configure (index, client) {
         sub.emit('synced')
       })
 
-      stream.on('data', async function (data) {
-        if (data.timestamp) {
-          const amount = BigInt(data.value)
-          const time = BigInt(data.timestamp * 1000) // ETH timestamps are in seconds
-          payments.add({ amount, time })
-        } else {
-          const tx = data.value
-          const block = await index.db.get(blockKey(tx.blockNumber))
-
-          const amount = BigInt(tx.value)
-          const time = BigInt(block.value.timestamp * 1000) // ETH timestamps are in seconds
-          payments.add({ amount, time })
-        }
-
+      stream.on('data', function (data) {
+        const amount = BigInt(data.value)
+        const time = BigInt(data.timestamp) * 1000n // ETH timestamps are in seconds
+        payments.add({ amount, time })
         sub.emit('update')
       })
+    }, (err) => {
+      // do nothing
     })
 
     sub.active = payments.active
-    sub.remainingTime = payments.remainingTime
+    sub.remainingTime = () => Number(payments.remainingTime())
     sub.remainingFunds = payments.remainingFunds
 
     sub.destroy = function () {
@@ -67,7 +61,7 @@ module.exports = function configure (index, client) {
   }
 }
 
-function convertDazaarPayment (pay) {
+function convertDazaarPayment (pay, decimals, token) {
   let ratio = 0n
 
   switch (pay.unit) {
@@ -82,16 +76,27 @@ function convertDazaarPayment (pay) {
       break
   }
 
-  const perSecond = BigInt(pay.amount) / (BigInt(pay.interval) * ratio)
+  let factor = 1
+
+  let amount = Number(pay.amount)
+  while ((amount | 0) !== amount && amount > 0) {
+    amount *= 10
+    factor *= 10
+  }
+
+  amount = BigInt(amount)
+  factor = BigInt(factor)
+
+  if (token) {
+    for (let i = 0; i < decimals; i++) {
+      amount *= 10n
+    }
+  }
+
+  const perSecond = amount / (BigInt(pay.interval) * ratio) / factor
   if (!perSecond) throw new Error('Invalid payment info')
 
-  return units.convert(perSecond, units[pay.currency])
-}
+  if (token) return perSecond
 
-function blockKey (seq) {
-  return '!block!' + padBlockNumber(seq)
-}
-
-function padBlockNumber (n) {
-  return n.slice(2).padStart(12, '0')
+  return units.convert(perSecond, units[pay.currency || pay.method])
 }

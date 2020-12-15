@@ -8,11 +8,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@dazaar/eth-tweak": "^1.0.0",
     "@hyperdivision/eth-transaction-indexer": "^1.0.0",
     "@hyperswarm/replicator": "^1.8.0",
     "eth-helpers": "^1.3.1",
     "hypercore": "^9.6.0",
-    "payment-tracker": "^0.2.0"
+    "payment-tracker": "^1.0.1"
   },
   "devDependencies": {},
   "keywords": [],
