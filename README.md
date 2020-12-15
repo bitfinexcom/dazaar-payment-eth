@@ -64,6 +64,22 @@ Create a new eth payment instance associated to a seller. `seller` should be a d
 
 A seller can validate the time left for a given buyer. Returns `error` if there is no time left on the subscription. The method shall check whether the given buyer has a subscription set-up and instantiate one not already present.
 
+#### `payment.buyers([privateKey], cb)`
+
+Generate a list of all the buyers with their tweaked accounts they paid to.
+If you private the private key you get the tweaked private keys out as well, meaning
+you can sweep the accounts to somewhere yourself.
+
+The result looks like this:
+
+```
+[{
+  buyer: <buyer-pub-key>,
+  uniqueFeed: <keypair of the hypercore generate for them>,
+  eth: <the eth account tweaked for the buyer>
+}, ...]
+```
+
 #### `const payTo = PaymentETH.tweak(buyerKey, dazaarCard, [paymentType])`
 
 Static method to generate the ETH address to pay to for a given stream. `buyerKey` is the buyer's dazaar key and `dazaarCard` give the relevant stream details.

@@ -13,7 +13,9 @@ const CHAIN_IDS = {
 module.exports = class DazaarETHPayment {
   constructor (dazaar, payment, index) {
     if (!dazaar.key) throw new Error('Dazaar key not set, did you wait for ready?')
+
     this.dazaar = dazaar.key
+    this.seller = dazaar
     this.payment = payment
     this.index = index
     this.publicKey = Buffer.from(pubKey(payment), 'hex')
@@ -64,6 +66,26 @@ module.exports = class DazaarETHPayment {
         remaining: time
       })
     }
+  }
+
+  accounts (privateKey, cb = privateKey) {
+    const tweak = new DazaarETHTweak({
+      privateKey,
+      publicKey: this.publicKey,
+      chainId: CHAIN_IDS[this.payment.chain || 'mainnet']
+    })
+
+    this.seller.selling(function (err, buyers) {
+      if (err) return cb(err)
+
+      const res = []
+
+      for (const { buyer, uniqueFeed } of buyers) {
+        res.push({ buyer, uniqueFeed, eth: tweak.keyPair(this.publicKey, buyer) })
+      }
+
+      cb(null, res)
+    })
   }
 
   _filter (buyer) {
