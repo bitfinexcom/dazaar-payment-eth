@@ -30,7 +30,7 @@ module.exports = function configure (index) {
     index.add(buyer, { token }).then((a) => {
       if (!payments) return
 
-      stream = index.createTransactionStream(buyer, { live: true })
+      stream = index.createTransactionStream(buyer, { live: true, token })
 
       sub.synced = false
       stream.once('synced', function () {

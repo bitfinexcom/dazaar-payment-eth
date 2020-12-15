@@ -13,7 +13,7 @@
     "payment-tracker": "^1.0.1"
   },
   "devDependencies": {
-    "@hyperdivision/eth-transaction-indexer": "^1.0.0",
+    "@hyperdivision/eth-transaction-indexer": "^2.0.0",
     "@hyperswarm/replicator": "^1.8.0",
     "hypercore": "^9.6.0",
     "standard": "^16.0.3"
