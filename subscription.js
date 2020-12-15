@@ -44,7 +44,7 @@ module.exports = function configure (index) {
         payments.add({ amount, time })
         sub.emit('update')
       })
-    }, (err) => {
+    }, () => {
       // do nothing
     })
 

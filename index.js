@@ -1,5 +1,3 @@
-const Indexer = require('@hyperdivision/eth-transaction-indexer')
-const hypercore = require('hypercore')
 const DazaarETHTweak = require('@dazaar/eth-tweak')
 const payments = require('./subscription')
 

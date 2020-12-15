@@ -25,7 +25,6 @@ const dazaarCard = {
   payment: [paymentCard]
 }
 
-
 const url = 'https://ropsten.infura.io/v3/2aa3f1f44c224eff83b07cef6a5b48b5'
 const index = new Index(hypercore('./db'), { endpoint: url, confirmations: 0 })
 const test = new Payment(dazaar, paymentCard, index)
