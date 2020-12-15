@@ -49,7 +49,7 @@ module.exports = function configure (index) {
     })
 
     sub.active = payments.active
-    sub.remainingTime = () => payments.remainingTime()
+    sub.remainingTime = payments.remainingTime
     sub.remainingFunds = payments.remainingFunds
 
     sub.destroy = function () {
