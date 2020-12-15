@@ -68,20 +68,24 @@ module.exports = class DazaarETHPayment {
     }
   }
 
-  accounts (privateKey, cb = privateKey) {
+  buyers (privateKey, cb = privateKey) {
+    if (typeof privateKey === 'function') privateKey = null
+    if (typeof privateKey === 'string') privateKey = Buffer.from(privateKey, 'hex')
+
     const tweak = new DazaarETHTweak({
       privateKey,
       publicKey: this.publicKey,
       chainId: CHAIN_IDS[this.payment.chain || 'mainnet']
     })
 
-    this.seller.selling(function (err, buyers) {
+    this.seller.buyers(function (err, buyers) {
       if (err) return cb(err)
 
       const res = []
 
       for (const { buyer, uniqueFeed } of buyers) {
-        res.push({ buyer, uniqueFeed, eth: tweak.keyPair(this.publicKey, buyer) })
+        const { publicKey, secretKey, address } = privateKey ? tweak.keyPair(this.dazaar, buyer) : tweak.publicData(this.dazaar, buyer)
+        res.push({ buyer, uniqueFeed, eth: { publicKey, secretKey: secretKey || null, address: address.toLowerCase() } })
       }
 
       cb(null, res)
