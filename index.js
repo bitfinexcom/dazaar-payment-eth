@@ -73,12 +73,12 @@ module.exports = class DazaarETHPayment {
     if (typeof privateKey === 'string') privateKey = Buffer.from(privateKey, 'hex')
 
     const tweak = new DazaarETHTweak({
-      privateKey,
+      secretKey: privateKey,
       publicKey: this.publicKey,
       chainId: CHAIN_IDS[this.payment.chain || 'mainnet']
     })
 
-    this.seller.buyers(function (err, buyers) {
+    this.seller.buyers((err, buyers) => {
       if (err) return cb(err)
 
       const res = []
