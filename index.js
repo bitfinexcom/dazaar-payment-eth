@@ -148,7 +148,7 @@ module.exports = class DazaarETHPayment {
     if (!pubKey(payment)) throw new Error('Payment does not support ETH')
 
     const t = new DazaarETHTweak({
-      publicKey: Buffer.from(pubKey(payment), 'hex'),
+      publicKey: Buffer.from(this.publicKeyToBuffer(pubKey(payment)), 'hex'),
       chainId: CHAIN_IDS[payment.chain || 'mainnet']
     })
 
