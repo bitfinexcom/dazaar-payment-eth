@@ -18,7 +18,11 @@ module.exports = class DazaarETHPayment {
     this.seller = dazaar
     this.payment = payment
     this.index = index
-    this.publicKey = Buffer.from(pubKey(payment), 'hex')
+    this.publicKey = DazaarETHPayment.publicKeyToBuffer((pubKey(payment)))
+
+    if (!DazaarETHPayment.validatePublicKey(this.publicKey)) {
+      throw new Error('Public key is invalid')
+    }
 
     this.subscribers = new Map()
     this.eth = payments(this.index)
@@ -117,6 +121,21 @@ module.exports = class DazaarETHPayment {
 
   static supports (payment) {
     return !!payment.method && payment.method.toUpperCase() === 'ETH'
+  }
+
+  static publicKeyToBuffer (key) {
+    if (typeof key === 'string' && key.startsWith('0x')) key = key.slice(2)
+    if (typeof key === 'string') key = Buffer.from(key, 'hex')
+
+    if (key.length === 64) {
+      key = Buffer.concat([Buffer.from([0x04]), key])
+    }
+
+    return key
+  }
+
+  static validatePublicKey (key) {
+    return DazaarETHTweak.validatePublicKey(this.publicKeyToBuffer(key))
   }
 
   static tweak (buyerKey, dazaarCard, payment = 0) {
